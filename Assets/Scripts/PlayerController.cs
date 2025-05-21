@@ -7,7 +7,8 @@ namespace Snakebird.Player
     public class PlayerController : MonoBehaviour
     {
         #region Serialized.
-        [SerializeField] SnakebirdHeadInstance _snakebird;
+        [SerializeField] SnakebirdInstance _snakebird;
+        [SerializeField] GameBoard _gameBoard;
         #endregion
 
         #region Structures.
@@ -15,6 +16,7 @@ namespace Snakebird.Player
 
         #region Public.
         public static InputAction moveAction;
+        public static InputAction undoAction;
         #endregion
 
         #region Private.
@@ -28,14 +30,22 @@ namespace Snakebird.Player
         {
             moveAction = InputSystem.actions.FindAction("Move");
             moveAction.performed += OnMove;
+            undoAction = InputSystem.actions.FindAction("Undo");
+            undoAction.performed += OnUndo;
         }
         void OnDisable()
         {
             moveAction.performed -= OnMove;
+            undoAction.performed -= OnUndo;
         }
         void OnMove(InputAction.CallbackContext callbackContext)
         {
+            _gameBoard.SaveState();
             _snakebird?.Move(new Vector3Int((int)callbackContext.ReadValue<Vector2>().x, (int)callbackContext.ReadValue<Vector2>().y, 0));
+        }
+        void OnUndo(InputAction.CallbackContext callbackContext)
+        {
+            _gameBoard.Rollback();
         }
         #endregion
 

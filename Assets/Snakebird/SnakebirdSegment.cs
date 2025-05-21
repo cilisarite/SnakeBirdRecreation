@@ -1,16 +1,18 @@
 using UnityEngine;
 
-namespace Snakebird.Tile
+namespace Snakebird.InstanceTile
 {
-    public interface IContactHandler
+    public class SnakebirdSegment : MonoBehaviour
     {
         #region Serialized.
+        [SerializeField] SpriteRenderer _spriteRenderer;
         #endregion
 
         #region Structures.
         #endregion
 
         #region Public.
+        public SpriteRenderer SpriteRenderer => _spriteRenderer;
         #endregion
 
         #region Private.
@@ -23,7 +25,6 @@ namespace Snakebird.Tile
         #endregion
 
         #region Public Methods.
-        public void OnContact(SnakebirdInstance eventPlayer);
         #endregion
 
         #region Private Methods.

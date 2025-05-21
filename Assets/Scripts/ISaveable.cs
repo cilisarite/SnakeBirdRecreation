@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace Snakebird.Tile
+namespace Snakebird
 {
-    public interface IContactHandler
+    public interface ISaveable<T>
     {
         #region Serialized.
         #endregion
@@ -23,7 +23,8 @@ namespace Snakebird.Tile
         #endregion
 
         #region Public Methods.
-        public void OnContact(SnakebirdInstance eventPlayer);
+        public T Save();
+        public void Load(T saveData);
         #endregion
 
         #region Private Methods.

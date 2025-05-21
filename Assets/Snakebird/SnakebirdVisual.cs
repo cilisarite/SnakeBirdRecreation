@@ -29,6 +29,13 @@ namespace Snakebird
         void Start()
         {
             DrawSnake();
+            _snakebird.OnMove += DrawSnake;
+            _snakebird.OnLoad += DrawSnake;
+        }
+        void OnDisable()
+        {
+            _snakebird.OnMove -= DrawSnake;
+            _snakebird.OnLoad -= DrawSnake;
         }
         #endregion
 
@@ -41,12 +48,24 @@ namespace Snakebird
             for (int i = 0; i < _snakebird.SnakebirdSegments.Count; i++)
             {
                 int byteMask = 0;
-                SpriteRenderer currentSegment = _snakebird.SnakebirdSegments[i];
-                Vector3Int gridPosition = _snakebird.GameBoard.Tilemap.layoutGrid.WorldToCell(currentSegment.transform.position);
-                byteMask += IsSnakeSegmentAtGridPosition(gridPosition + Vector3Int.up) ? 1 : 0;
-                byteMask += IsSnakeSegmentAtGridPosition(gridPosition + Vector3Int.right) ? 2 : 0;
-                byteMask += IsSnakeSegmentAtGridPosition(gridPosition + Vector3Int.down) ? 4 : 0;
-                byteMask += IsSnakeSegmentAtGridPosition(gridPosition + Vector3Int.left) ? 8 : 0;
+
+                SpriteRenderer currentSegment = _snakebird.SnakebirdSegments[i].SpriteRenderer;
+                Vector3Int currentGridPosition = _snakebird.GameBoard.Tilemap.layoutGrid.WorldToCell(currentSegment.transform.position);
+                Vector3Int lastSegmentGridPosition = currentGridPosition;
+                if (i != 0)
+                {
+                    lastSegmentGridPosition = _snakebird.GameBoard.Tilemap.layoutGrid.WorldToCell(_snakebird.SnakebirdSegments[i - 1].SpriteRenderer.transform.position);
+                }
+                Vector3Int nextSegmentGridPosition = currentGridPosition;
+                if (i != _snakebird.SnakebirdSegments.Count - 1)
+                {
+                    nextSegmentGridPosition = _snakebird.GameBoard.Tilemap.layoutGrid.WorldToCell(_snakebird.SnakebirdSegments[i + 1].SpriteRenderer.transform.position);
+                }
+
+                byteMask += lastSegmentGridPosition == currentGridPosition + Vector3Int.up || nextSegmentGridPosition == currentGridPosition + Vector3Int.up ? 1 : 0;
+                byteMask += lastSegmentGridPosition == currentGridPosition + Vector3Int.right || nextSegmentGridPosition == currentGridPosition + Vector3Int.right ? 2 : 0;
+                byteMask += lastSegmentGridPosition == currentGridPosition + Vector3Int.down || nextSegmentGridPosition == currentGridPosition + Vector3Int.down ? 4 : 0;
+                byteMask += lastSegmentGridPosition == currentGridPosition + Vector3Int.left || nextSegmentGridPosition == currentGridPosition + Vector3Int.left ? 8 : 0;
 
                 Sprite north;
                 if (i == 0)
@@ -57,8 +76,6 @@ namespace Snakebird
                 {
                     north = _north;
                 }
-
-                Debug.Log((byte)byteMask);
 
                 switch ((byte)byteMask)
                 {
@@ -132,19 +149,6 @@ namespace Snakebird
                         break;
                 }
             }
-        }
-        private bool IsSnakeSegmentAtGridPosition(Vector3Int gridPosition)
-        {
-            Vector3 worldPosition = _snakebird.GameBoard.Tilemap.layoutGrid.GetCellCenterWorld(gridPosition);
-            Collider2D collider2D = Physics2D.OverlapPoint(new Vector2(worldPosition.x, worldPosition.y));
-            if (collider2D != null)
-            {
-                if (collider2D.attachedRigidbody.gameObject == gameObject)
-                {
-                    return true;
-                }
-            }
-            return false;
         }
         #endregion
     }
