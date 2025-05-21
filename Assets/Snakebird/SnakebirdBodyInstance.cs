@@ -1,8 +1,9 @@
+using Snakebird.Tile;
 using UnityEngine;
 
-namespace Snakebird.Tile
+namespace Snakebird
 {
-    public class IContactHandler
+    public class SnakebirdBodyInstance : TileInstance
     {
         #region Serialized.
         #endregion
