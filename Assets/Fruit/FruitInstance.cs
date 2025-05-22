@@ -9,12 +9,14 @@ namespace Snakebird.InstanceTile
         #region Serialized.
         [SerializeField] SpriteRenderer _spriteRenderer;
         [SerializeField] Sprite _sprite;
+        [SerializeField] BoxCollider2D _boxCollider;
         #endregion
 
         #region Structures.
         #endregion
 
         #region Public.
+        public bool IsEaten => _isEaten;
         #endregion
 
         #region Private.
@@ -42,6 +44,7 @@ namespace Snakebird.InstanceTile
             {
                 eventPlayer.AddSegment();
                 _spriteRenderer.sprite = null;
+                _boxCollider.enabled = false;
                 _isEaten = true;
             }
         }
@@ -59,6 +62,7 @@ namespace Snakebird.InstanceTile
             if (_isEaten == false)
             {
                 _spriteRenderer.sprite = _sprite;
+                _boxCollider.enabled = true;
             }
         }
         #endregion

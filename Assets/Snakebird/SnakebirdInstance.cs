@@ -21,6 +21,7 @@ namespace Snakebird
 
         #region Private.
         private List<SnakebirdSegment> _snakebirdSegments;
+        private bool _isDead;
         #endregion
 
         #region Events.
@@ -32,12 +33,12 @@ namespace Snakebird
         protected override void Awake()
         {
             base.Awake();
+            _snakebirdSegments = new List<SnakebirdSegment>();
+            GetAllSegments();
         }
         void Start()
         {
-            _snakebirdSegments = new List<SnakebirdSegment>();
             _gameBoard.AddSnakebirdInstance(this);
-            GetAllSegments();
         }
         #endregion
 
@@ -45,17 +46,17 @@ namespace Snakebird
         public void Move(Vector3Int direction)
         {
             Vector3Int nextGridPosition = _gameBoard.Tilemap.layoutGrid.WorldToCell(_snakebirdSegments[0].transform.position) + direction;
+            InstanceTileBase instanceTileAtNextPosition = _gameBoard.GetInstanceTile(nextGridPosition);
 
-            if (_gameBoard.IsInBounds(nextGridPosition) == false || _gameBoard.Tilemap.GetTile(nextGridPosition) != null)
+            if (_gameBoard.IsInBounds(nextGridPosition) == false || _gameBoard.Tilemap.GetTile(nextGridPosition) != null || instanceTileAtNextPosition == this)
                 return;
 
-            if (_gameBoard.InstanceTilesByGridPosition.ContainsKey(nextGridPosition))
+            _gameBoard.SaveState();
+
+            if (instanceTileAtNextPosition is IContactHandler)
             {
-                if (_gameBoard.InstanceTilesByGridPosition[nextGridPosition] is IContactHandler)
-                {
-                    IContactHandler contactHandler = _gameBoard.InstanceTilesByGridPosition[nextGridPosition] as IContactHandler;
-                    contactHandler.OnContact(this);
-                }
+                IContactHandler contactHandler = instanceTileAtNextPosition as IContactHandler;
+                contactHandler.OnContact(this);
             }
 
             Vector3Int currentGridPosition;
@@ -66,6 +67,19 @@ namespace Snakebird
                 currentSegment.position = _gameBoard.Tilemap.layoutGrid.CellToWorld(nextGridPosition);
                 nextGridPosition = currentGridPosition;
             }
+
+            while (CanShiftInDirection(Vector3Int.down))
+            {
+                if (CheckForSpike())
+                {
+                    Die();
+                    break;
+                }
+                else
+                {
+                    Shift(Vector3Int.down);
+                }
+            }
             OnMove?.Invoke();
         }
         public void Sleep()
@@ -75,6 +89,14 @@ namespace Snakebird
         public void Wake()
         {
 
+        }
+        public void Die()
+        {
+            _isDead = true;
+            foreach (SnakebirdSegment snakebirdSegment in SnakebirdSegments)
+            {
+                snakebirdSegment.gameObject.SetActive(false);
+            }
         }
         public void AddSegment()
         {
@@ -97,6 +119,7 @@ namespace Snakebird
             {
                 snakebirdSaveData.segmentsGridPosition[i] = _gameBoard.Tilemap.layoutGrid.WorldToCell(_snakebirdSegments[i].transform.position);
             }
+            snakebirdSaveData.isDead = _isDead;
             return snakebirdSaveData;
         }
         public void Load(SnakebirdSaveData saveData)
@@ -111,6 +134,15 @@ namespace Snakebird
             for (int i = 0; i < saveData.segmentsGridPosition.Length; i++)
             {
                 _snakebirdSegments[i].transform.position = saveData.segmentsGridPosition[i];
+            }
+
+            _isDead = saveData.isDead;
+            if (_isDead == true)
+            {
+                foreach (SnakebirdSegment snakebirdSegment in SnakebirdSegments)
+                {
+                    snakebirdSegment.gameObject.SetActive(false);
+                }
             }
             OnLoad?.Invoke();
         }
@@ -127,10 +159,56 @@ namespace Snakebird
                 }
             }
         }
+        private bool CanShiftInDirection(Vector3Int direction)
+        {
+            foreach (SnakebirdSegment snakebirdSegment in _snakebirdSegments)
+            {
+                Vector3Int nextGridPosition = _gameBoard.Tilemap.layoutGrid.WorldToCell(snakebirdSegment.transform.position) + direction;
+                InstanceTileBase instanceTileAtNextPosition = _gameBoard.GetInstanceTile(nextGridPosition);
+
+                if (direction.y < 0)
+                {
+                    if (_gameBoard.IsInBounds(nextGridPosition) == false || _gameBoard.Tilemap.GetTile(nextGridPosition) != null || (instanceTileAtNextPosition != null && instanceTileAtNextPosition is not SpikeInstance && instanceTileAtNextPosition != this))
+                        return false;
+                }
+                else
+                {
+                    if (_gameBoard.IsInBounds(nextGridPosition) == false || _gameBoard.Tilemap.GetTile(nextGridPosition) != null || (instanceTileAtNextPosition != null && instanceTileAtNextPosition != this))
+                        return false;
+                }
+            }
+            return true;
+        }
+        private bool CheckForSpike()
+        {
+            foreach (SnakebirdSegment snakebirdSegment in _snakebirdSegments)
+            {
+                Vector3Int nextGridPosition = _gameBoard.Tilemap.layoutGrid.WorldToCell(snakebirdSegment.transform.position) + Vector3Int.down;
+                InstanceTileBase instanceTileAtNextPosition = _gameBoard.GetInstanceTile(nextGridPosition);
+
+                if (instanceTileAtNextPosition != null)
+                {
+                    if (instanceTileAtNextPosition is SpikeInstance)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        private void Shift(Vector3Int direction)
+        {
+            for (int i = 0; i < _snakebirdSegments.Count; i++)
+            {
+                Transform currentSegment = _snakebirdSegments[i].transform;
+                currentSegment.position = _gameBoard.Tilemap.layoutGrid.CellToWorld(_gameBoard.Tilemap.layoutGrid.WorldToCell(currentSegment.position) + direction);
+            }
+        }
         #endregion
     }
     public struct SnakebirdSaveData
     {
         public Vector3Int[] segmentsGridPosition;
+        public bool isDead;
     }
 }

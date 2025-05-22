@@ -40,7 +40,6 @@ namespace Snakebird.Player
         }
         void OnMove(InputAction.CallbackContext callbackContext)
         {
-            _gameBoard.SaveState();
             _snakebird?.Move(new Vector3Int((int)callbackContext.ReadValue<Vector2>().x, (int)callbackContext.ReadValue<Vector2>().y, 0));
         }
         void OnUndo(InputAction.CallbackContext callbackContext)

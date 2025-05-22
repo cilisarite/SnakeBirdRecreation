@@ -20,14 +20,14 @@ namespace Snakebird.Tile
         public Tilemap Tilemap => _tilemap;
         public List<SnakebirdInstance> SnakeBirds => _snakeBirds;
         public List<FruitInstance> Fruits => _fruits;
-        public Dictionary<Vector3Int, InstanceTileBase> InstanceTilesByGridPosition => _instanceTilesByGridPosition;
+        public List<SpikeInstance> Spikes => _spikes;
         #endregion
 
         #region Private.
         private Vector3Int _origin;
         private List<SnakebirdInstance> _snakeBirds;
         private List<FruitInstance> _fruits;
-        private Dictionary<Vector3Int, InstanceTileBase> _instanceTilesByGridPosition;
+        private List<SpikeInstance> _spikes;
         #endregion
 
         #region Events.
@@ -39,7 +39,7 @@ namespace Snakebird.Tile
             _origin = _tilemap.origin;
             _snakeBirds = new List<SnakebirdInstance>();
             _fruits = new List<FruitInstance>();
-            _instanceTilesByGridPosition = new Dictionary<Vector3Int, InstanceTileBase>();
+            _spikes = new List<SpikeInstance>();
 
             _boardSaveStates = new List<BoardSaveData>();
         }
@@ -52,20 +52,64 @@ namespace Snakebird.Tile
         }
         public void AddSnakebirdInstance(SnakebirdInstance snakebirdInstance)
         {
+            if (_snakeBirds.Contains(snakebirdInstance))
+                return;
             _snakeBirds.Add(snakebirdInstance);
-            foreach (SnakebirdSegment snakebirdSegment in snakebirdInstance.SnakebirdSegments)
-            {
-                _instanceTilesByGridPosition.Add(_tilemap.layoutGrid.WorldToCell(snakebirdSegment.transform.position), snakebirdInstance);
-            }
+        }
+        public void RemoveSnakebirdInstance(SnakebirdInstance snakebirdInstance)
+        {
+            _snakeBirds.Remove(snakebirdInstance);
         }
         public void AddFruitInstance(FruitInstance fruitInstance)
         {
+            if (_fruits.Contains(fruitInstance))
+                return;
             _fruits.Add(fruitInstance);
-            _instanceTilesByGridPosition.Add(_tilemap.layoutGrid.WorldToCell(fruitInstance.transform.position), fruitInstance);
         }
-        public void AddInstanceTileBase(InstanceTileBase instanceTileBase)
+        public void RemoveFruitInstance(FruitInstance fruitInstance)
         {
-            _instanceTilesByGridPosition.Add(_tilemap.layoutGrid.WorldToCell(instanceTileBase.transform.position), instanceTileBase);
+            _fruits.Remove(fruitInstance);
+        }
+        public void AddSpikeInstance(SpikeInstance spikeInstance)
+        {
+            if (_spikes.Contains(spikeInstance))
+                return;
+            _spikes.Add(spikeInstance);
+        }
+        public void RemoveSpikeInstance(SpikeInstance spikeInstance)
+        {
+            _spikes.Remove(spikeInstance);
+        }
+        public InstanceTileBase GetInstanceTile(Vector3Int gridPosition)
+        {
+            foreach (SnakebirdInstance snakebirdInstance in _snakeBirds)
+            {
+                foreach (SnakebirdSegment snakebirdSegment in snakebirdInstance.SnakebirdSegments)
+                {
+                    if (_tilemap.layoutGrid.WorldToCell(snakebirdSegment.transform.position) == gridPosition)
+                    {
+                        return snakebirdInstance;
+                    }
+                }
+            }
+            foreach (FruitInstance fruitInstance in _fruits)
+            {
+                if (_tilemap.layoutGrid.WorldToCell(fruitInstance.transform.position) == gridPosition)
+                {
+                    if (fruitInstance.IsEaten == false)
+                    {
+                        return fruitInstance;
+                    }
+                }
+            }
+            foreach (SpikeInstance spikeInstance in _spikes)
+            {
+                if (_tilemap.layoutGrid.WorldToCell(spikeInstance.transform.position) == gridPosition)
+                {
+                    return spikeInstance;
+                }
+            }
+            return null;
         }
         #endregion
 
