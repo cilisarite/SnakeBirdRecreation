@@ -38,7 +38,7 @@ namespace Snakebird.InstanceTile
         #endregion
 
         #region Public Methods.
-        public void OnContact(SnakebirdInstance eventPlayer)
+        public void OnContact(SnakebirdInstance eventPlayer, Vector3Int direction)
         {
             if (_isEaten == false)
             {

@@ -23,7 +23,7 @@ namespace Snakebird.Tile
         #endregion
 
         #region Public Methods.
-        public void OnContact(SnakebirdInstance eventPlayer);
+        public void OnContact(SnakebirdInstance eventPlayer, Vector3Int direction);
         #endregion
 
         #region Private Methods.
